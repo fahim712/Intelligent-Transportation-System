@@ -1,17 +1,3 @@
-/*
- * Intelligent Integrated Public Transportation & Traffic Control System
- * Educational C99 simulation project
- *
- * Build:
- *   gcc -std=c99 -Wall -Wextra -pedantic main.c -o its_simulation -lm
- *
- * Run:
- *   ./its_simulation
- *
- * This is a simplified decision-engine simulation, not a certified
- * real-world traffic signal controller.
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -70,8 +56,6 @@ static RoadTraffic roads[MAX_ROADS];
 static PublicBus buses[MAX_BUSES];
 static RouteOption routes[MAX_ROUTES];
 static int road_count, bus_count, route_count;
-
-/* Read an integer from one complete input line and validate its range. */
 static int read_int(const char *prompt, int min_value, int max_value)
 {
     char line[128], extra;
@@ -91,8 +75,6 @@ static int read_int(const char *prompt, int min_value, int max_value)
                min_value, max_value);
     }
 }
-
-/* Read a finite floating-point value from one complete input line. */
 static double read_double(const char *prompt, double min_value,
                           double max_value)
 {
@@ -113,8 +95,6 @@ static double read_double(const char *prompt, double min_value,
                min_value, max_value);
     }
 }
-
-/* Read a short text field, removing the trailing newline if present. */
 static void read_text(const char *prompt, char *out, size_t out_size)
 {
     size_t length;
@@ -129,10 +109,9 @@ static void read_text(const char *prompt, char *out, size_t out_size)
     if (length > 0 && out[length - 1] == '\n') {
         out[length - 1] = '\0';
     } else {
-        /* Discard the rest of an overlong input line. */
         int ch;
         while ((ch = getchar()) != '\n' && ch != EOF) {
-            /* discard */
+        
         }
     }
 
@@ -140,13 +119,11 @@ static void read_text(const char *prompt, char *out, size_t out_size)
         strcpy(out, "Unnamed");
     }
 }
-
-/* Collect traffic measurements for each simulated road/intersection. */
 static void input_traffic_data(void)
 {
     int i;
 
-    puts("\n=== TRAFFIC DATA INPUT ===");
+    puts("\n TRAFFIC DATA INPUT ");
     road_count = read_int("Number of roads/intersections (1-5): ",
                           1, MAX_ROADS);
 
@@ -164,13 +141,11 @@ static void input_traffic_data(void)
             read_int("Road capacity in vehicles (1-10000): ", 1, 10000);
     }
 }
-
-/* Collect passenger load, schedule delay and current location for buses. */
 static void input_bus_data(void)
 {
     int i;
 
-    puts("\n=== PUBLIC BUS DATA INPUT ===");
+    puts("\n PUBLIC BUS DATA INPUT ");
     bus_count = read_int("Number of buses (1-5): ", 1, MAX_BUSES);
 
     for (i = 0; i < bus_count; ++i) {
@@ -188,13 +163,11 @@ static void input_bus_data(void)
                   buses[i].location, sizeof buses[i].location);
     }
 }
-
-/* Collect alternative route data. Congestion factor is between 0 and 1. */
 static void input_route_data(void)
 {
     int i;
 
-    puts("\n=== ROUTE DATA INPUT ===");
+    puts("\n ROUTE DATA INPUT ");
     route_count = read_int("Number of alternative routes (1-5): ",
                            1, MAX_ROUTES);
 
@@ -210,16 +183,11 @@ static void input_route_data(void)
             read_double("Congestion factor (0.0-1.0): ", 0.0, 1.0);
     }
 }
-
-/*
- * Density ratio = vehicle count / road capacity.
- * Congestion percentage is density ratio * 100, capped at 100 for display.
- */
 static void calculate_congestion(void)
 {
     int i;
 
-    puts("\n=== CONGESTION ANALYSIS ===");
+    puts("\n CONGESTION ANALYSIS ");
     for (i = 0; i < road_count; ++i) {
         roads[i].density_ratio =
             (double)roads[i].vehicle_count / roads[i].capacity;
@@ -242,17 +210,11 @@ static void calculate_congestion(void)
         }
     }
 }
-
-/*
- * Passenger percentage = passengers / passenger capacity * 100.
- * Delay percentage = delay / 30 minutes * 100, capped at 100.
- * Priority score = 60% passenger percentage + 40% delay percentage.
- */
 static void calculate_bus_priority(void)
 {
     int i;
 
-    puts("\n=== BUS PRIORITY ANALYSIS ===");
+    puts("\n BUS PRIORITY ANALYSIS ");
     for (i = 0; i < bus_count; ++i) {
         double passenger_percent =
             100.0 * buses[i].passengers / buses[i].passenger_capacity;
@@ -277,21 +239,11 @@ static void calculate_bus_priority(void)
                buses[i].priority_granted ? "PRIORITY REQUEST" : "NORMAL");
     }
 }
-
-/*
- * Demand = 70% congestion + 30% queue ratio.
- * Green time = 20 + 0.35 * demand, with a 5-second bus extension
- * when a priority bus is mapped to the same road ID.
- * The result is clamped to the configured 15-60 second range.
- *
- * For this teaching example, bus route ID is treated as the road ID.
- * A real system would use GPS/map matching to identify the next signal.
- */
 static void calculate_adaptive_signals(void)
 {
     int i, j;
 
-    puts("\n=== ADAPTIVE SIGNAL CONTROL ===");
+    puts("\n ADAPTIVE SIGNAL CONTROL ");
     for (i = 0; i < road_count; ++i) {
         double queue_percent =
             100.0 * roads[i].queue_length / roads[i].capacity;
@@ -340,17 +292,11 @@ static void calculate_adaptive_signals(void)
         }
     }
 }
-
-/*
- * Travel time (minutes) = distance / speed * 60.
- * Route cost = travel time * (1 + 2 * congestion factor).
- * The route with the smallest cost is recommended.
- */
 static void calculate_route_costs(void)
 {
     int i, best = 0;
 
-    puts("\n=== TRAFFIC-AWARE ROUTE EVALUATION ===");
+    puts("\n TRAFFIC-AWARE ROUTE EVALUATION ");
     for (i = 0; i < route_count; ++i) {
         routes[i].travel_time_minutes =
             routes[i].distance_km / routes[i].average_speed_kmh * 60.0;
@@ -374,19 +320,6 @@ static void calculate_route_costs(void)
            routes[best].name, routes[best].travel_time_minutes,
            routes[best].route_cost);
 }
-
-/*
- * Estimate performance for either fixed-time (adaptive == 0) or
- * adaptive (adaptive != 0) control.
- *
- * This is a simplified comparative model:
- * base wait = 8 + 0.30*congestion + 0.70*queue percentage
- * green adjustment = 0.50*(green time - 30)
- * estimated wait = max(0, base wait - green adjustment)
- * estimated throughput = vehicle count * (1 - wait/200)
- *
- * It is an illustrative KPI estimate, not a traffic-flow measurement.
- */
 static SimulationKPI calculate_kpi(int adaptive)
 {
     SimulationKPI kpi = {0.0, 0.0, 0.0, 0.0};
@@ -437,7 +370,6 @@ static SimulationKPI calculate_kpi(int adaptive)
     for (i = 0; i < bus_count; ++i) {
         double delay = buses[i].delay_minutes;
 
-        /* Model a 25% delay reduction for priority buses under adaptive control. */
         if (adaptive && buses[i].priority_granted) {
             delay *= 0.75;
         }
@@ -450,8 +382,6 @@ static SimulationKPI calculate_kpi(int adaptive)
 
     return kpi;
 }
-
-/* Print a side-by-side comparison of fixed and adaptive KPI estimates. */
 static void compare_kpis(void)
 {
     SimulationKPI fixed = calculate_kpi(0);
@@ -464,8 +394,6 @@ static void compare_kpis(void)
     puts("\n=== PERFORMANCE COMPARISON ===");
     printf("%-30s %15s %15s\n",
            "KPI", "Fixed control", "Adaptive control");
-    puts("----------------------------------------------------------------");
-
     printf("%-30s %15.2f %15.2f\n",
            "Average vehicle wait (min)",
            fixed.average_wait_minutes, adaptive.average_wait_minutes);
@@ -479,8 +407,6 @@ static void compare_kpis(void)
     printf("%-30s %14.2f%% %14.2f%%\n",
            "Efficiency estimate",
            fixed.efficiency_percent, adaptive.efficiency_percent);
-
-    puts("----------------------------------------------------------------");
 
     if (fixed.average_wait_minutes > 0.0) {
         wait_change = 100.0 *
@@ -514,13 +440,11 @@ static void compare_kpis(void)
     printf("Efficiency difference:          %+.2f percentage points\n",
            adaptive.efficiency_percent - fixed.efficiency_percent);
 }
-
-/* Display a compact summary of the calculated decisions. */
 static void display_summary(void)
 {
     int i;
 
-    puts("\n=== FINAL SYSTEM SUMMARY ===");
+    puts("\n FINAL SYSTEM SUMMARY ");
     printf("Roads/intersections: %d | Buses: %d | Routes: %d\n",
            road_count, bus_count, route_count);
 
@@ -538,8 +462,6 @@ static void display_summary(void)
                buses[i].priority_score);
     }
 }
-
-/* Load a repeatable illustrative scenario for a quick demonstration. */
 static void load_demo_scenario(void)
 {
     road_count = 4;
@@ -561,14 +483,10 @@ static void load_demo_scenario(void)
 
     puts("\nPre-loaded demonstration scenario loaded.");
 }
-
-/* Run the modules in their logical processing order. */
 static void run_simulation(void)
 {
-    puts("\n======================================================");
+  
     puts("       INTELLIGENT TRANSPORTATION DECISION ENGINE");
-    puts("======================================================");
-
     calculate_congestion();
     calculate_bus_priority();
     calculate_adaptive_signals();
@@ -584,10 +502,9 @@ int main(void)
     int choice;
 
     for (;;) {
-        puts("\n======================================================");
+     
         puts(" INTELLIGENT INTEGRATED PUBLIC TRANSPORTATION &");
         puts("             TRAFFIC CONTROL SYSTEM");
-        puts("======================================================");
         puts("1. Run pre-loaded demo simulation");
         puts("2. Enter custom traffic, bus and route data");
         puts("3. Exit");
